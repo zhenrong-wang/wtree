@@ -1,2 +1,2 @@
 # wtree
-Yet another implementation of the `tree`
+The minimum implementation of the GNU/Linux utility `tree`
