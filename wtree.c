@@ -24,7 +24,7 @@
 size_t num_of_dirs = 0;
 size_t num_of_files = 0;
 
-int dir_tree(char *path_prefix, char *file_name, size_t depth) {
+int wtree(char *path_prefix, char *file_name, size_t depth) {
     if(path_prefix == NULL || file_name == NULL) {
         return PATH_PTR_ERR;
     }
@@ -111,7 +111,7 @@ int dir_tree(char *path_prefix, char *file_name, size_t depth) {
         if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
-        dir_tree(full_path, entry->d_name, depth + 1);
+        wtree(full_path, entry->d_name, depth + 1);
     }
     closedir(dir);
     free(print_prefix);
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     if(argc > 1) {
         root_path = argv[1];
     }
-    run_flag = dir_tree(root_path, "", 0);
+    run_flag = wtree(root_path, "", 0);
     if(run_flag != 0) {
         printf("\nFAILED! ERROR_CODE: %d\n", run_flag);
     }
