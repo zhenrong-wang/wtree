@@ -20,6 +20,7 @@
 #define GENERAL_BOLD     "\033[1m"
 #define RESET_DISPLAY    "\033[0m"
 #define GREY_LIGHT       "\033[2;37m"
+#define HIGH_BLUE_BOLD   "\033[1;34m"
 
 size_t num_of_dirs = 0;
 size_t num_of_files = 0;
@@ -97,14 +98,14 @@ int wtree(char *path_prefix, char *file_name, size_t depth) {
     if(dir == NULL) {
         free(print_prefix);
         free(full_path);
-        printf("%s*!!!OPENDIR_ERROR!!!*%s\n", print_prefix, p_file_name);
+        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "*!!!OPENDIR_ERROR!!!*%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
         return OPEN_DIR_ERR;
     }
     if(depth == 0) {
-        printf(GENERAL_BOLD "%s" RESET_DISPLAY "\n", full_path);
+        printf(HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", full_path);
     }
     else {
-        printf(GREY_LIGHT "%s" RESET_DISPLAY GENERAL_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+        printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
         num_of_dirs++;
     }
     while((entry = readdir(dir)) != NULL) {
