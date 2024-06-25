@@ -16,16 +16,68 @@
 
 #define FATAL_RED_BOLD   "\033[1;31m"
 #define HIGH_GREEN_BOLD  "\033[1;32m"
-#define HIGH_CYAN_BOLD   "\033[1;36m"
+#define HIGH_CYAN_BOLD   "\033[1;4;36m"
 #define GENERAL_BOLD     "\033[1m"
 #define RESET_DISPLAY    "\033[0m"
 #define GREY_LIGHT       "\033[2;37m"
 #define HIGH_BLUE_BOLD   "\033[1;34m"
+#define WARN_YELLOW      "\033[0;33m"
+
+struct lnk_node {
+    char lnk_target[FILENAME_MAXLEN];
+    struct lnk_node *p_next;
+};
 
 size_t num_of_dirs = 0;
 size_t num_of_files = 0;
+struct lnk_node *head = NULL;
 
-int wtree(char *path_prefix, char *file_name, size_t depth) {
+int check_list(struct lnk_node *head, char *lnk_target) {
+    if(head == NULL) {
+        return 0;
+    }
+    if(lnk_target == NULL) {
+        return -1;
+    }
+    struct lnk_node *ptr = head;
+    while(ptr != NULL) {
+        if(strcmp(ptr->lnk_target, lnk_target) == 0) {
+            return 1;
+        }
+        ptr = ptr->p_next;
+    }
+    return 0;
+}
+
+int push_to_list(struct lnk_node **head, char *lnk_target) {
+    if(head == NULL || lnk_target == NULL) {
+        return -1;
+    }
+    struct lnk_node *new_node = (struct lnk_node *)calloc(1, sizeof(struct lnk_node));
+    if(new_node == NULL) {
+        return -3;
+    }
+    strncpy(new_node->lnk_target, lnk_target, FILENAME_MAXLEN - 1);
+    if(*head == NULL) {
+        *head = new_node;
+        return 0;
+    }
+    new_node->p_next = *head;
+    *head = new_node;
+    return 0;
+}
+
+void free_list(struct lnk_node *head) {
+    struct lnk_node *ptr = head;
+    struct lnk_node *ptr_next;
+    while(ptr != NULL) {
+        ptr_next = ptr->p_next;
+        free(ptr);
+        ptr = ptr_next;
+    }
+}
+
+int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(path_prefix == NULL || file_name == NULL) {
         return PATH_PTR_ERR;
     }
@@ -73,13 +125,36 @@ int wtree(char *path_prefix, char *file_name, size_t depth) {
                 num_of_files++;
                 return READLINK_ERR;
             }
-            if(lnk_file_stat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target_file);
+            if(!S_ISDIR(lnk_file_stat.st_mode)) {
+                if(S_ISLNK(lnk_file_stat.st_mode)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target_file);
+                }
+                else if(lnk_file_stat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target_file);
+                }
+                else {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s\n", print_prefix, p_file_name, lnk_target_file);
+                }
+                num_of_files++;
             }
             else {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s\n", print_prefix, p_file_name, lnk_target_file);
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY " ", print_prefix, p_file_name, lnk_target_file);
+                int check_flag = check_list(head, lnk_target_file);
+                if (check_flag == 1) {
+                    printf(WARN_YELLOW "[ recursive, not followed ]" RESET_DISPLAY "\n");
+                }
+                else if (check_flag == 0){
+                    push_to_list(&head, lnk_target_file);
+                    printf("\n");
+                    wtree(lnk_target_file, "", depth, 1);
+                    num_of_dirs++;
+                }
+                else {
+                    free(print_prefix);
+                    free(full_path);
+                    return MEM_ALLC_ERR;
+                }
             }
-            num_of_files++;
         }
         else {
             if(path_stat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
@@ -101,18 +176,20 @@ int wtree(char *path_prefix, char *file_name, size_t depth) {
         printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "*!!!OPENDIR_ERROR!!!*%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
         return OPEN_DIR_ERR;
     }
-    if(depth == 0) {
-        printf(HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", full_path);
-    }
-    else {
-        printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
-        num_of_dirs++;
+    if(lnk_dir_flag == 0) {
+        if(depth == 0) {
+            printf(HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", full_path);
+        }
+        else {
+            printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+            num_of_dirs++;
+        }
     }
     while((entry = readdir(dir)) != NULL) {
         if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
-        wtree(full_path, entry->d_name, depth + 1);
+        wtree(full_path, entry->d_name, depth + 1, 0);
     }
     closedir(dir);
     free(print_prefix);
@@ -126,7 +203,7 @@ int main(int argc, char **argv) {
     if(argc > 1) {
         root_path = argv[1];
     }
-    run_flag = wtree(root_path, "", 0);
+    run_flag = wtree(root_path, "", 0, 0);
     if(run_flag != 0) {
         printf("\nFAILED! ERROR_CODE: %d\n", run_flag);
     }
@@ -135,5 +212,6 @@ int main(int argc, char **argv) {
         (num_of_dirs > 1) ? (printf("%ld directories, ", num_of_dirs)) : (printf("%ld directory, ", num_of_dirs));
         (num_of_files > 1) ? (printf("%ld files\n", num_of_files)) : (printf("%ld file\n", num_of_files));
     }
+    free_list(head);
     return (run_flag == 0) ? 0 : 1;
 }
