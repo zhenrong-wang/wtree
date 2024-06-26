@@ -25,6 +25,7 @@
 #define HIGH_BLUE_BOLD   "\033[1;34m"
 #define WARN_YELLOW      "\033[0;33m"
 #define BLACK_RED_BOLD   "\033[1;40;31m"
+#define GREEN_BLUE_BOLD "\033[1;42;34m"
 
 struct lnk_node {
     char lnk_target[FILENAME_MAX];
@@ -67,6 +68,11 @@ int check_list(struct lnk_node *head, char *lnk_target) {
         ptr = ptr->p_next;
     }
     return 0;
+}
+
+int is_777_mod(struct stat path_stat) {
+    mode_t perm = path_stat.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+    return (perm == (S_IRWXU | S_IRWXG | S_IRWXO)) ? 1 : 0;
 }
 
 int is_zip_file(const char *file_name) {
@@ -221,8 +227,13 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                     num_of_files++;
                 }
             }
-            else if(show_lnk_dirs || !depth){
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
+            else if(show_lnk_dirs || !depth) {
+                if(is_777_mod(lnk_file_stat)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY GREEN_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
+                }
+                else {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
+                }
                 int check_flag = check_list(head, lnk_target_abs);
                 if (check_flag == 1) {
                     if(depth) {
@@ -247,7 +258,12 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 }
             }
             else {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                if(is_777_mod(lnk_file_stat)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY GREEN_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                }
+                else {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                }
                 num_of_dirs++;
             }
         }
@@ -285,10 +301,20 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     }
     if(lnk_dir_flag == 0) {
         if(depth == 0) {
-            printf(HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", full_path);
+            if(is_777_mod(path_stat)) {
+                printf(GREEN_BLUE_BOLD "%s" RESET_DISPLAY "\n", full_path);
+            }
+            else {
+                printf(HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", full_path);
+            }
         }
         else {
-            printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+            if(is_777_mod(path_stat)) {
+                printf(GREY_LIGHT "%s" RESET_DISPLAY GREEN_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+            }
+            else {
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+            }
             num_of_dirs++;
         }
     }
