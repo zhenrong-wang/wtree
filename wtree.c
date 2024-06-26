@@ -167,15 +167,21 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
             }
             if(!S_ISDIR(lnk_file_stat.st_mode)) {
                 if(S_ISLNK(lnk_file_stat.st_mode)) {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name, lnk_target);
                 }
                 else if(lnk_file_stat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name, lnk_target);
                 }
                 else {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s\n", print_prefix, p_file_name, lnk_target);
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s", print_prefix, p_file_name, lnk_target);
                 }
-                num_of_files++;
+                if(depth == 0) {
+                    printf(WARN_YELLOW " [failed to open dir]" RESET_DISPLAY "\n");
+                }
+                else {
+                    printf("\n");
+                    num_of_files++;
+                }
             }
             else if(show_lnk_dirs){
                 printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
@@ -203,12 +209,18 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
         }
         else {
             if(path_stat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name);
             }
             else {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY "%s\n", print_prefix, p_file_name);
+                printf(GREY_LIGHT "%s" RESET_DISPLAY "%s", print_prefix, p_file_name);
             }
-            num_of_files++;
+            if(depth == 0) {
+                printf(WARN_YELLOW " [failed to open dir]" RESET_DISPLAY "\n");
+            }
+            else {
+                printf("\n");
+                num_of_files++;
+            }
         }
         free(print_prefix);
         free(full_path);
