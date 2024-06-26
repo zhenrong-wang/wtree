@@ -234,13 +234,13 @@ int main(int argc, char **argv) {
         }
     }
     run_flag = wtree(root_path, "", 0, 0);
+    
+    printf("\n");
+    (num_of_dirs > 1) ? (printf("%ld directories, ", num_of_dirs)) : (printf("%ld directory, ", num_of_dirs));
+    (num_of_files > 1) ? (printf("%ld files\n", num_of_files)) : (printf("%ld file\n", num_of_files));
+
     if(run_flag != 0) {
-        printf("\nerror occured. code: %d\n", run_flag);
-    }
-    else {
-        printf("\n");
-        (num_of_dirs > 1) ? (printf("%ld directories, ", num_of_dirs)) : (printf("%ld directory, ", num_of_dirs));
-        (num_of_files > 1) ? (printf("%ld files\n", num_of_files)) : (printf("%ld file\n", num_of_files));
+        printf(WARN_YELLOW "error occured. code: %d" RESET_DISPLAY "\n", run_flag);
     }
     free_list(head);
     return (run_flag == 0) ? 0 : 1;
