@@ -8,6 +8,7 @@
 #include <libgen.h>
 
 #define NUM_CMD_OPTIONS 2
+#define NUM_ZIP_SUFFIX 7
 
 #define PATH_PTR_ERR -1
 #define GET_STAT_ERR -3
@@ -22,17 +23,27 @@
 #define RESET_DISPLAY    "\033[0m"
 #define GREY_LIGHT       "\033[2;37m"
 #define HIGH_BLUE_BOLD   "\033[1;34m"
-#define WARN_YELLOW      "\033[1;33m"
-#define BLACK_RED_BOLD   "\033[1;31;43m"
+#define WARN_YELLOW      "\033[0;33m"
+#define BLACK_RED_BOLD   "\033[1;31;40m"
+
+struct lnk_node {
+    char lnk_target[FILENAME_MAX];
+    struct lnk_node *p_next;
+};
 
 const char cmd_flags[NUM_CMD_OPTIONS][16] = {
     "-a",
     "-l"
 };
 
-struct lnk_node {
-    char lnk_target[FILENAME_MAX];
-    struct lnk_node *p_next;
+const static char zip_suffix[NUM_ZIP_SUFFIX][8] = {
+    "gz",
+    "bz2",
+    "zip",
+    "tar",
+    "tgz",
+    "7z",
+    "rar"
 };
 
 size_t num_of_dirs = 0;
@@ -54,6 +65,27 @@ int check_list(struct lnk_node *head, char *lnk_target) {
             return 1;
         }
         ptr = ptr->p_next;
+    }
+    return 0;
+}
+
+int is_zip_file(const char *file_name) {
+    if(file_name == NULL) {
+        return 0;
+    }
+    size_t i = strlen(file_name) - 1;
+    size_t j = 0;
+    while(file_name[i] != '.' && i > 0) {
+        i--;
+        j++;
+    }
+    if(j > 3) {
+        return 0;
+    }
+    for(size_t k = 0; k < NUM_ZIP_SUFFIX; k++) {
+        if(strcmp(file_name + i + 1, zip_suffix[k]) == 0) {
+            return 1;
+        }
     }
     return 0;
 }
@@ -152,7 +184,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     struct dirent *entry = NULL;
 
     if(lstat(full_path, &path_stat) == -1) {
-        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [invalid file or dir]" RESET_DISPLAY "\n", print_prefix, p_file_name);
+        printf(GREY_LIGHT "%s" RESET_DISPLAY BLACK_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [invalid file or dir]" RESET_DISPLAY "\n", print_prefix, p_file_name);
         free(print_prefix);
         free(full_path);
         return GET_STAT_ERR;
@@ -160,7 +192,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(!S_ISDIR(path_stat.st_mode)) {
         if(S_ISLNK(path_stat.st_mode)) {
             if(get_lnk_target_path(full_path, lnk_target, lnk_target_abs, FILENAME_MAX) != 0 || lstat(lnk_target_abs, &lnk_file_stat) == -1) {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY BLACK_RED_BOLD " -> %s" RESET_DISPLAY WARN_YELLOW " [invalid target]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " BLACK_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [invalid target]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 free(print_prefix);
                 free(full_path);
                 num_of_files++;
@@ -174,7 +206,12 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                     printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name, lnk_target);
                 }
                 else {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s", print_prefix, p_file_name, lnk_target);
+                    if(is_zip_file(lnk_target_abs)) {
+                        printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name, lnk_target);
+                    }
+                    else {
+                        printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s", print_prefix, p_file_name, lnk_target);
+                    }
                 }
                 if(depth == 0) {
                     printf(WARN_YELLOW " [failed to open dir]" RESET_DISPLAY "\n");
@@ -219,7 +256,12 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name);
             }
             else {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY "%s", print_prefix, p_file_name);
+                if(is_zip_file(p_file_name)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name);
+                }
+                else {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY "%s", print_prefix, p_file_name);
+                }
             }
             if(depth == 0) {
                 printf(WARN_YELLOW " [failed to open dir]" RESET_DISPLAY "\n");
