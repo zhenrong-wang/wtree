@@ -25,7 +25,7 @@
 #define HIGH_BLUE_BOLD   "\033[1;34m"
 #define WARN_YELLOW      "\033[0;33m"
 #define BLACK_RED_BOLD   "\033[1;40;31m"
-#define GREEN_BLUE_BOLD "\033[1;42;34m"
+#define GREEN_BLUE_BOLD  "\033[1;42;34m"
 
 struct lnk_node {
     char lnk_target[FILENAME_MAX];
