@@ -142,9 +142,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     else {
         strncpy(full_path, path_prefix, full_path_len - 1);
         p_file_name = path_prefix;
-        if(realpath(full_path, lnk_target_abs) == NULL) {
-            return READLINK_ERR;
-        }
+        realpath(full_path, lnk_target_abs);
         push_to_list(&head, lnk_target_abs);
     }
 
