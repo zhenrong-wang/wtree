@@ -201,7 +201,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(dir == NULL) {
         free(print_prefix);
         free(full_path);
-        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW "[ failed to open dir ]" RESET_DISPLAY "\n", print_prefix, p_file_name);
+        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [ failed to open dir ]" RESET_DISPLAY "\n", print_prefix, p_file_name);
         return OPEN_DIR_ERR;
     }
     if(lnk_dir_flag == 0) {
