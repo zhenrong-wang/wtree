@@ -23,6 +23,7 @@
 #define GREY_LIGHT       "\033[2;37m"
 #define HIGH_BLUE_BOLD   "\033[1;34m"
 #define WARN_YELLOW      "\033[1;33m"
+#define BLACK_RED_BOLD   "\033[1;31;40m"
 
 const char cmd_flags[NUM_CMD_OPTIONS][16] = {
     "-a",
@@ -159,7 +160,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(!S_ISDIR(path_stat.st_mode)) {
         if(S_ISLNK(path_stat.st_mode)) {
             if(get_lnk_target_path(full_path, lnk_target, lnk_target_abs, FILENAME_MAX) != 0 || lstat(lnk_target_abs, &lnk_file_stat) == -1) {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY FATAL_RED_BOLD " -> %s" RESET_DISPLAY WARN_YELLOW " [invalid target]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY BLACK_RED_BOLD " -> %s" RESET_DISPLAY WARN_YELLOW " [invalid target]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 free(print_prefix);
                 free(full_path);
                 num_of_files++;
