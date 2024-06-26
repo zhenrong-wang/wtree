@@ -23,7 +23,7 @@
 #define GREY_LIGHT       "\033[2;37m"
 #define HIGH_BLUE_BOLD   "\033[1;34m"
 #define WARN_YELLOW      "\033[1;33m"
-#define BLACK_RED_BOLD   "\033[1;31;40m"
+#define BLACK_RED_BOLD   "\033[1;31;43m"
 
 const char cmd_flags[NUM_CMD_OPTIONS][16] = {
     "-a",
