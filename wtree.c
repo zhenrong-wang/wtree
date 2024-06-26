@@ -5,8 +5,9 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
+#include <libgen.h>
 
-#define FILENAME_MAXLEN 4096
+#define FILENAME_MAX 4096
 
 #define PATH_PTR_ERR -1
 #define GET_STAT_ERR -3
@@ -21,10 +22,10 @@
 #define RESET_DISPLAY    "\033[0m"
 #define GREY_LIGHT       "\033[2;37m"
 #define HIGH_BLUE_BOLD   "\033[1;34m"
-#define WARN_YELLOW      "\033[0;33m"
+#define WARN_YELLOW      "\033[1;33m"
 
 struct lnk_node {
-    char lnk_target[FILENAME_MAXLEN];
+    char lnk_target[FILENAME_MAX];
     struct lnk_node *p_next;
 };
 
@@ -57,7 +58,7 @@ int push_to_list(struct lnk_node **head, char *lnk_target) {
     if(new_node == NULL) {
         return -3;
     }
-    strncpy(new_node->lnk_target, lnk_target, FILENAME_MAXLEN - 1);
+    strncpy(new_node->lnk_target, lnk_target, FILENAME_MAX - 1);
     if(*head == NULL) {
         *head = new_node;
         return 0;
@@ -77,6 +78,27 @@ void free_list(struct lnk_node *head) {
     }
 }
 
+int get_lnk_target_path(const char *lnk_name, char lnk_target[], char lnk_target_abs[], size_t max_len) {
+    if(lnk_name == NULL) {
+        return PATH_PTR_ERR;
+    }
+    char lnk_dir[FILENAME_MAX] = "";
+    char lnk_target_buffer[FILENAME_MAX] = "";
+    memset(lnk_dir, '\0', FILENAME_MAX);
+    memset(lnk_target, '\0', max_len);
+    if(readlink(lnk_name, lnk_target, max_len - 1) == -1 || realpath(dirname(strdup(lnk_name)), lnk_dir) == NULL) {
+        return READLINK_ERR;
+    }
+    memset(lnk_target_abs, '\0', max_len);
+    if(lnk_target[0] != '/') {
+        snprintf(lnk_target_buffer, FILENAME_MAX, "%s/%s", lnk_dir, lnk_target);
+        return ((realpath(lnk_target_buffer, lnk_target_abs) == NULL) ? READLINK_ERR : 0); 
+    }
+    else {
+        return ((realpath(lnk_target, lnk_target_abs) == NULL) ? READLINK_ERR : 0); 
+    }
+}
+
 int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(path_prefix == NULL || file_name == NULL) {
         return PATH_PTR_ERR;
@@ -84,7 +106,8 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     size_t prefix_len = strlen(path_prefix);
     size_t filename_len = strlen(file_name);
     size_t full_path_len = prefix_len + filename_len + 2;
-    char lnk_target_file[FILENAME_MAXLEN] = "";
+    char lnk_target[FILENAME_MAX] = "";
+    char lnk_target_abs[FILENAME_MAX] = "";
     char *print_prefix = (char *)calloc(depth * 4 + 1, sizeof(char));
     char *p_file_name;
     if(print_prefix == NULL) {
@@ -93,6 +116,9 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     memset(print_prefix, ' ', depth * 4);
     if(depth != 0) {
         strncpy(print_prefix + depth * 4 - 4, "+---", 4);
+        for(size_t i = 0; i < depth - 1; i++) {
+            strncpy(print_prefix + i * 4, "|   ", 4);
+        }
     }
     char *full_path = (char *)calloc(full_path_len, sizeof(char));
     if(full_path == NULL) {
@@ -106,6 +132,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     else {
         strncpy(full_path, path_prefix, full_path_len - 1);
         p_file_name = path_prefix;
+        push_to_list(&head, full_path);
     }
     struct stat path_stat;
     struct stat lnk_file_stat;
@@ -113,13 +140,13 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(lstat(full_path, &path_stat) == -1) {
         free(print_prefix);
         free(full_path);
-        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "!!!STAT_ERROR!!! %s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [ invalid file or dir ]" RESET_DISPLAY "\n", print_prefix, p_file_name);
         return GET_STAT_ERR;
     }
     if(!S_ISDIR(path_stat.st_mode)) {
         if(S_ISLNK(path_stat.st_mode)) {
-            if(readlink(full_path, lnk_target_file, FILENAME_MAXLEN - 1) == -1 || lstat(lnk_target_file, &lnk_file_stat) == -1) {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY FATAL_RED_BOLD " -> !!!INVALID_TARGET!!!" RESET_DISPLAY "\n", print_prefix, p_file_name);
+            if(get_lnk_target_path(full_path, lnk_target, lnk_target_abs, FILENAME_MAX) != 0 || lstat(lnk_target_abs, &lnk_file_stat) == -1) {
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY FATAL_RED_BOLD " -> %s" RESET_DISPLAY WARN_YELLOW " [ invalid target ]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 free(print_prefix);
                 free(full_path);
                 num_of_files++;
@@ -127,26 +154,27 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
             }
             if(!S_ISDIR(lnk_file_stat.st_mode)) {
                 if(S_ISLNK(lnk_file_stat.st_mode)) {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target_file);
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 }
                 else if(lnk_file_stat.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target_file);
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_GREEN_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 }
                 else {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s\n", print_prefix, p_file_name, lnk_target_file);
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s\n", print_prefix, p_file_name, lnk_target);
                 }
                 num_of_files++;
             }
             else {
-                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY " ", print_prefix, p_file_name, lnk_target_file);
-                int check_flag = check_list(head, lnk_target_file);
+                printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
+                int check_flag = check_list(head, lnk_target_abs);
                 if (check_flag == 1) {
-                    printf(WARN_YELLOW "[ recursive, not followed ]" RESET_DISPLAY "\n");
+                    printf(WARN_YELLOW " [ recursive, not followed ]" RESET_DISPLAY "\n");
+                    num_of_dirs++;
                 }
                 else if (check_flag == 0){
-                    push_to_list(&head, lnk_target_file);
+                    push_to_list(&head, lnk_target_abs);
                     printf("\n");
-                    wtree(lnk_target_file, "", depth, 1);
+                    wtree(lnk_target_abs, "", depth, 1);
                     num_of_dirs++;
                 }
                 else {
@@ -173,7 +201,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     if(dir == NULL) {
         free(print_prefix);
         free(full_path);
-        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "*!!!OPENDIR_ERROR!!!*%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
+        printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW "[ failed to open dir ]" RESET_DISPLAY "\n", print_prefix, p_file_name);
         return OPEN_DIR_ERR;
     }
     if(lnk_dir_flag == 0) {
@@ -199,13 +227,15 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
 
 int main(int argc, char **argv) {
     int run_flag = 0;
-    char *root_path = "./";
+    char *root_path = ".";
     if(argc > 1) {
-        root_path = argv[1];
+        if(strcmp(argv[1], ".") != 0 && strcmp(argv[1], "./") != 0) {
+            root_path = argv[1];
+        }
     }
     run_flag = wtree(root_path, "", 0, 0);
     if(run_flag != 0) {
-        printf("\nFAILED! ERROR_CODE: %d\n", run_flag);
+        printf("\nerror occured. code: %d\n", run_flag);
     }
     else {
         printf("\n");
