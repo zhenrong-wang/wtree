@@ -52,7 +52,7 @@ The outputs would be well formatted.
 - Warn information: grey yellow font
 - Corrupted symblic links: black background, bold red font
 
-# **4. Contributing
+# **4. Contributing**
 
 This software is open source, under the MIT license terms. Please check the `LICENSE` for details.
 
