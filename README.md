@@ -2,7 +2,7 @@
 
 # **1. About this software**
 
-`tree` is a utility widely used to get the whole structure of a directory. This project `wtree` is a minimal implementation of `tree` from scratch. Similar to the `tree`, `wtree` get and print the directory structure in rich formats (highlights, colors, alignments, etc.).
+The `tree` command is a utility widely used to get the whole structure of a directory. This project `wtree` is a minimal implementation of `tree` from scratch. Similar to the `tree`, `wtree` gets and prints the directory structure in rich formats (highlights, colors, alignments, etc.).
 
 A typical running of `wtree` as shown below:
 
