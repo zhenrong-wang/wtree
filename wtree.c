@@ -129,7 +129,7 @@ int get_lnk_target_path(const char *lnk_name, char lnk_target[], char lnk_target
         return PATH_PTR_ERR;
     }
     char lnk_dir[FILENAME_MAX] = "";
-    char lnk_target_buffer[FILENAME_MAX] = "";
+    char lnk_target_buffer[FILENAME_MAX + 2] = "";
     memset(lnk_dir, '\0', FILENAME_MAX);
     memset(lnk_target, '\0', max_len);
     char *lnk_name_dup = strdup(lnk_name);
@@ -164,9 +164,9 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     }
     memset(print_prefix, ' ', depth * 4);
     if(depth != 0) {
-        strncpy(print_prefix + depth * 4 - 4, "+---", 4);
+        memcpy(print_prefix + depth * 4 - 4, "+---", 4);
         for(size_t i = 0; i < depth - 1; i++) {
-            strncpy(print_prefix + i * 4, "|   ", 4);
+            memcpy(print_prefix + i * 4, "|   ", 4);
         }
     }
     char *full_path = (char *)calloc(full_path_len, sizeof(char));
@@ -365,7 +365,7 @@ void get_target_path (int argc, char **argv, char target_path[], int max_len) {
             return;
         }
     }
-    strncpy(target_path, ".", 1);
+    strncpy(target_path, ".", max_len - 1);
 }
 
 int main(int argc, char **argv) {
