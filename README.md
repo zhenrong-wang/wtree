@@ -1,4 +1,4 @@
-**wtree: An minimal implementation of the utility `tree` for Unix-like OS**
+# **wtree: An minimal implementation of the utility `tree` for Unix-like OS**
 
 # **1. About this software**
 
@@ -6,7 +6,7 @@
 
 A typical running of `wtree` as shown below:
 
-<img src="./assets/demo.png" alt="Demo" style="width: 300px;">
+<img src="./assets/demo.png" alt="Demo" style="width: 600px;">
 
 # **2. How-to: build and run**
 
