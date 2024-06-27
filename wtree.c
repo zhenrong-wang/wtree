@@ -65,7 +65,7 @@ int check_list(struct lnk_node *head, char *lnk_target) {
         return 0;
     }
     if(lnk_target == NULL) {
-        return -1;
+        return 0;
     }
     struct lnk_node *ptr = head;
     while(ptr != NULL) {
@@ -237,43 +237,37 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                     num_of_files++;
                 }
             }
-            else if(show_lnk_dirs || !depth) {
-                if(is_777_mod(lnk_file_stat)) {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY GREEN_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
-                }
-                else {
-                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
-                }
-                int check_flag = check_list(head, lnk_target_abs);
-                if (check_flag == 1) {
-                    if(depth) {
-                        printf(WARN_YELLOW " [recursive, not followed]" RESET_DISPLAY "\n");
-                        num_of_dirs++;
-                    }
-                    else {
-                        printf("\n");
-                        wtree(lnk_target_abs, "", depth, 1);
-                    }
-                }
-                else if (check_flag == 0) {
-                    push_to_list(&head, lnk_target_abs);
-                    printf("\n");
-                    wtree(lnk_target_abs, "", depth, 1);
-                }
-                else {
-                    free(print_prefix);
-                    free(full_path);
-                    return MEM_ALLC_ERR;
-                }
-            }
-            else {
+            else if(depth == 0 || !show_lnk_dirs) {
                 if(is_777_mod(lnk_file_stat)) {
                     printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY GREEN_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 }
                 else {
                     printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 }
-                num_of_dirs++;
+                if(depth == 0) {
+                    push_to_list(&head, lnk_target_abs);
+                    wtree(lnk_target_abs, "", depth, 1);
+                }
+                else {
+                    num_of_dirs++;
+                }
+            }
+            else {
+                if(is_777_mod(lnk_file_stat)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY GREEN_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
+                }
+                else {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
+                }
+                if(check_list(head, lnk_target_abs)) {
+                    printf(WARN_YELLOW " [recursive, not followed]" RESET_DISPLAY "\n");
+                    num_of_dirs++;
+                }
+                else {
+                    push_to_list(&head, lnk_target_abs);
+                    printf("\n");
+                    wtree(lnk_target_abs, "", depth, 1);
+                }
             }
         }
         else {
@@ -324,8 +318,10 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
             else {
                 printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY "\n", print_prefix, p_file_name);
             }
-            num_of_dirs++;
         }
+    }
+    if(depth != 0) {
+        num_of_dirs++;
     }
     while((entry = readdir(dir)) != NULL) {
         if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
