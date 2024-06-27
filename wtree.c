@@ -140,7 +140,7 @@ int get_lnk_target_path(const char *lnk_name, char lnk_target[], char lnk_target
     free(lnk_name_dup);
     memset(lnk_target_abs, '\0', max_len);
     if(lnk_target[0] != '/') {
-        snprintf(lnk_target_buffer, FILENAME_MAX, "%s/%s", lnk_dir, lnk_target);
+        snprintf(lnk_target_buffer, FILENAME_MAX + 8, "%s/%s", lnk_dir, lnk_target);
         return ((realpath(lnk_target_buffer, lnk_target_abs) == NULL) ? READLINK_ERR : 0); 
     }
     else {
