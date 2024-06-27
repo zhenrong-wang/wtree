@@ -1,3 +1,10 @@
+/*
+ * Copyright (C) Zhenrong Wang
+ * This code is distributed under the license: MIT License
+ * Originally written by Zhenrong WANG
+ * mailto: zhenrongwang@live.com
+ */
+
 #define _GNU_SOURCE 1
 #include <stdio.h>
 #include <stdlib.h>
