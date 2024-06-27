@@ -132,9 +132,12 @@ int get_lnk_target_path(const char *lnk_name, char lnk_target[], char lnk_target
     char lnk_target_buffer[FILENAME_MAX] = "";
     memset(lnk_dir, '\0', FILENAME_MAX);
     memset(lnk_target, '\0', max_len);
-    if(readlink(lnk_name, lnk_target, max_len - 1) == -1 || realpath(dirname(strdup(lnk_name)), lnk_dir) == NULL) {
+    char *lnk_name_dup = strdup(lnk_name);
+    if(readlink(lnk_name, lnk_target, max_len - 1) == -1 || realpath(dirname(lnk_name_dup), lnk_dir) == NULL) {
+        free(lnk_name_dup);
         return READLINK_ERR;
     }
+    free(lnk_name_dup);
     memset(lnk_target_abs, '\0', max_len);
     if(lnk_target[0] != '/') {
         snprintf(lnk_target_buffer, FILENAME_MAX, "%s/%s", lnk_dir, lnk_target);
