@@ -259,7 +259,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                     push_to_list(&head, lnk_target_abs);
                     printf("\n");
                     wtree(lnk_target_abs, "", depth, 1);
-                    num_of_dirs++;
+                    //num_of_dirs++;
                 }
                 else {
                     free(print_prefix);
