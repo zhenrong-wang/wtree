@@ -129,7 +129,7 @@ int get_lnk_target_path(const char *lnk_name, char lnk_target[], char lnk_target
         return PATH_PTR_ERR;
     }
     char lnk_dir[FILENAME_MAX] = "";
-    char lnk_target_buffer[FILENAME_MAX + 2] = "";
+    char lnk_target_buffer[FILENAME_MAX + 8] = "";
     memset(lnk_dir, '\0', FILENAME_MAX);
     memset(lnk_target, '\0', max_len);
     char *lnk_name_dup = strdup(lnk_name);
