@@ -43,14 +43,14 @@ By default, the hidden files or dirs would not be printed out, and the symbloc l
 
 The outputs would be well formatted.
 
-- Regular files: no special format
-- Symbolic links: underlined, bold cyan font
-- Regular directories: bold blue font
-- Zipped files: bold red font
-- Directories with 777 mod: green background, bold blue font
-- Executable files: bold green font
-- Warn information: grey yellow font
-- Corrupted symblic links: black background, bold red font
+- regular files
+- <span style="color: cyan; font-weight: bold; text-decoration: underline;">symbolic links</span>
+- <span style="color: blue; font-weight: bold;">regular directories</span>
+- <span style="color: red; font-weight: bold;">zip files</span>
+- <span style="color: blue; background-color: green; font-weight: bold;">directories with 777 mod</span>
+- <span style="color: green; font-weight: bold;">executable files</span>
+- <span style="color: yellow;">warning information</span>
+- <span style="color: red; background-color: black; font-weight: bold;">corrupted symblic link target</span>
 
 # **4. Contributing**
 
