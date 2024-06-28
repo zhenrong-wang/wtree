@@ -236,7 +236,9 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 }
                 else {
                     printf("\n");
-                    num_of_files++;
+                    if(lnk_dir_flag != 1) {
+                        num_of_files++;
+                    }
                 }
             }
             else if(depth == 0 || !show_lnk_dirs) {
