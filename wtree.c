@@ -211,7 +211,9 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY BLACK_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [invalid target]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 free(print_prefix);
                 free(full_path);
-                num_of_files++;
+                if(lnk_dir_flag != 1) {
+                    num_of_files++;
+                }
                 return READLINK_ERR;
             }
             if(!S_ISDIR(lnk_file_stat.st_mode)) {
