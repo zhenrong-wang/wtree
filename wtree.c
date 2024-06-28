@@ -191,8 +191,6 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
     else {
         strncpy(full_path, path_prefix, full_path_len - 1);
         p_file_name = path_prefix;
-        realpath(full_path, lnk_target_abs);
-        push_to_list(&head, lnk_target_abs);
     }
 
     struct stat path_stat;
@@ -211,9 +209,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY BLACK_RED_BOLD "%s" RESET_DISPLAY WARN_YELLOW " [invalid target]" RESET_DISPLAY "\n", print_prefix, p_file_name, lnk_target);
                 free(print_prefix);
                 free(full_path);
-                if(lnk_dir_flag != 1) {
-                    num_of_files++;
-                }
+                num_of_files++;
                 return READLINK_ERR;
             }
             if(!S_ISDIR(lnk_file_stat.st_mode)) {
@@ -236,9 +232,7 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 }
                 else {
                     printf("\n");
-                    if(lnk_dir_flag != 1) {
-                        num_of_files++;
-                    }
+                    num_of_files++;
                 }
             }
             else if(depth == 0 || !show_lnk_dirs) {
@@ -263,6 +257,14 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                 else {
                     printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_BLUE_BOLD "%s" RESET_DISPLAY , print_prefix, p_file_name, lnk_target);
                 }
+                /*printf("%s\n", lnk_target_abs);
+                struct lnk_node *ptr = head;
+                struct lnk_node *ptr_next;
+                while(ptr != NULL) {
+                    ptr_next = ptr->p_next;
+                    printf("%s\n", ptr->lnk_target);
+                    ptr = ptr_next;
+                }*/
                 if(check_list(head, lnk_target_abs)) {
                     printf(WARN_YELLOW " [recursive, not followed]" RESET_DISPLAY "\n");
                     num_of_dirs++;
@@ -306,6 +308,10 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
         num_of_dirs++;
         return OPEN_DIR_ERR;
     }
+
+    realpath(full_path, lnk_target_abs);
+    push_to_list(&head, lnk_target_abs);
+
     if(lnk_dir_flag == 0) {
         if(depth == 0) {
             if(is_777_mod(path_stat)) {
