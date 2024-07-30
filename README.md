@@ -1,4 +1,4 @@
-# **wtree: An minimal implementation of the utility `tree` for Unix-like OS**
+# **wtree: A minimal implementation of the utility `tree` for Unix-like OS**
 
 # **1. About this software**
 
