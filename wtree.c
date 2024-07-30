@@ -16,6 +16,7 @@
 
 #define NUM_CMD_OPTIONS 2
 #define NUM_ZIP_SUFFIX 7
+#define NUM_IMG_SUFFIX 14
 
 #define PATH_PTR_ERR -1
 #define GET_STAT_ERR -3
@@ -30,6 +31,7 @@
 #define RESET_DISPLAY    "\033[0m"
 #define GREY_LIGHT       "\033[2;37m"
 #define HIGH_BLUE_BOLD   "\033[1;34m"
+#define HIGH_PURPLE_BOLD "\033[1;35m"
 #define WARN_YELLOW      "\033[0;33m"
 #define BLACK_RED_BOLD   "\033[1;40;31m"
 #define GREEN_BLUE_BOLD  "\033[1;42;34m"
@@ -52,6 +54,23 @@ const static char zip_suffix[NUM_ZIP_SUFFIX][8] = {
     "tgz",
     "7z",
     "rar"
+};
+
+const static char img_suffix[NUM_IMG_SUFFIX][8] = {
+    "bmp",
+    "emf",
+    "exif",
+    "gif",
+    "ico",
+    "jpg",
+    "jpeg",
+    "png",
+    "psd",
+    "svg",
+    "tif",
+    "tiff",
+    "webp",
+    "wmf"
 };
 
 size_t num_of_dirs = 0;
@@ -97,6 +116,27 @@ int is_zip_file(const char *file_name) {
     }
     for(size_t k = 0; k < NUM_ZIP_SUFFIX; k++) {
         if(strcmp(file_name + i + 1, zip_suffix[k]) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int is_img_file(const char *file_name) {
+    if(file_name == NULL) {
+        return 0;
+    }
+    size_t i = strlen(file_name) - 1;
+    size_t j = 0;
+    while(file_name[i] != '.' && i > 0) {
+        i--;
+        j++;
+    }
+    if(j > 4) {
+        return 0;
+    }
+    for(size_t k = 0; k < NUM_IMG_SUFFIX; k++) {
+        if(strcmp(file_name + i + 1, img_suffix[k]) == 0) {
             return 1;
         }
     }
@@ -223,6 +263,9 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
                     if(is_zip_file(lnk_target_abs)) {
                         printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name, lnk_target);
                     }
+                    else if(is_img_file(lnk_target_abs)) {
+                        printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY HIGH_PURPLE_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name, lnk_target);
+                    }
                     else {
                         printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_CYAN_BOLD "%s" RESET_DISPLAY GREY_LIGHT " -> " RESET_DISPLAY "%s", print_prefix, p_file_name, lnk_target);
                     }
@@ -283,6 +326,9 @@ int wtree(char *path_prefix, char *file_name, size_t depth, int lnk_dir_flag) {
             else {
                 if(is_zip_file(p_file_name)) {
                     printf(GREY_LIGHT "%s" RESET_DISPLAY FATAL_RED_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name);
+                }
+                else if(is_img_file(p_file_name)) {
+                    printf(GREY_LIGHT "%s" RESET_DISPLAY HIGH_PURPLE_BOLD "%s" RESET_DISPLAY, print_prefix, p_file_name);
                 }
                 else {
                     printf(GREY_LIGHT "%s" RESET_DISPLAY "%s", print_prefix, p_file_name);
